@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NFA Approval System - Dashboard for managing requests and approvals">
+  <meta name="author" content="NFA Approval System">
+  <title>Claim Approval System - Dashboard</title>
+
+  <!-- 🔒 Hide dashboard until /api/me succeeds -->
+  <style>
+    /* Hide main app UI while we validate auth */
+    body.preauth .app-main { display: none !important; }
+  </style>
+
+  <!-- Preload critical resources -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+  <link rel="preload" href="dash.css" as="style">
+  
+  <!-- ArchitectUI core shell -->
+  <link href="https://demo.dashboardpack.com/architectui-html-free/main.css" rel="stylesheet">
+  <!-- Toastify for notifications -->
+  <link href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" rel="stylesheet">
+  <!-- Modern Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Feather Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.css">
+  <!-- Custom styles -->
+  <link href="dash.css" rel="stylesheet">
+  <link href="theme.css" rel="stylesheet">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+</head>
+<!-- Add preauth class so UI is hidden until JS removes it -->
+<body class="preauth">
+  <!-- Skip to main content for accessibility -->
+  <a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
+
+  <div class="app-container app-theme-white body-tabs-shadow fixed-sidebar fixed-header">
+    
+    <!-- Sidebar Navigation -->
+    <nav id="miniNav" class="sidebar-nav" role="navigation" aria-label="Main navigation">
+      <div class="sidebar-header">
+        <h6 class="sidebar-title">
+          <i data-feather="navigation" class="sidebar-icon"></i>
+          Navigation
+        </h6>
+      </div>
+      <div class="sidebar-links">
+        <a href="#requesterDash" class="mini-link active" aria-label="Create and draft requests">
+          <i data-feather="plus-circle" class="link-icon"></i>
+          <span class="link-text">Create / Draft</span>
+        </a>
+        <a href="#userRequests" class="mini-link" aria-label="View my NFA requests">
+          <i data-feather="file-text" class="link-icon"></i>
+          <span class="link-text">My Claim</span>
+        </a>
+        <a href="#approverDash" class="mini-link" aria-label="Approver dashboard">
+          <i data-feather="check-square" class="link-icon"></i>
+          <span class="link-text">Approver</span>
+        </a>
+        <!-- <a href="#expertDash" class="mini-link" aria-label="Expert opinion section">
+          <i data-feather="award" class="link-icon"></i>
+          <span class="link-text">Expert</span>
+        </a> -->
+        <a href="#masterDash" class="mini-link" aria-label="Master controls">
+          <i data-feather="settings" class="link-icon"></i>
+          <span class="link-text">Master Controls</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      <!-- Header -->
+      <header class="app-header header-shadow" role="banner">
+        <div class="app-header__content">
+          <div class="app-header-left d-flex align-items-center">
+            <img src="https://www.zuarimoney.com/App_Themes/images/Zuari_whatsnew2.jpg" 
+                 alt="Zuari Industries Logo" 
+                 class="logo-header mr-3" />
+            <div class="header-title">
+              <h1 class="mb-0">Claim Dashboard</h1>
+              <small class="text-muted"></small>
+            </div>
+          </div>
+
+          <div class="app-header-right d-flex align-items-center gap-3">
+            <div class="user-info">
+              <span id="welcomeTxt" class="welcome-text">Hi, User</span>
+              <small class="text-muted d-block">Welcome back</small>
+            </div>
+            <div class="header-actions">
+              <button id="logoutBtn" class="btn btn-outline-danger btn-sm">
+                <i data-feather="log-out" class="me-1"></i>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+   
+      <!-- Main Content -->
+      <main id="main-content" class="app-main__outer" role="main">
+        <div class="app-main__inner">
+          
+          <!-- Loading Spinner -->
+          <div id="spinnerOverlay" class="loading-overlay" aria-hidden="true" style="display:none;">
+            <div class="spinner-container">
+              <div class="spinner" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="loading-text">Loading dashboard...</p>
+            </div>
+          </div>
+                    <!-- My Details (from employee directory) -->
+          <section id="myDetailsCard" class="dashboard-section card mb-4" aria-labelledby="my-details-title">
+            <div class="card-body">
+              <div class="section-header d-flex justify-content-between align-items-center">
+                <div>
+                  <h2 id="my-details-title" class="section-title">
+                    <i data-feather="user" class="title-icon"></i>
+                    My Details
+                  </h2>
+                  <p class="section-subtitle">Employee information from the directory</p>
+                </div>
+              </div>
+
+              <div class="row small text-muted">
+                <div class="col-md-4 mb-2">
+                  <div><strong>Employee Code:</strong> <span id="profEmpCode">—</span></div>
+                  <div><strong>Name:</strong> <span id="profName">—</span></div>
+                  <div><strong>Company:</strong> <span id="profCompany">—</span></div>
+                </div>
+                <div class="col-md-4 mb-2">
+                  <div><strong>Designation:</strong> <span id="profDesignation">—</span></div>
+                  <div><strong>Department:</strong> <span id="profDept">—</span></div>
+                  <div><strong>Manager:</strong> <span id="profManagerName">—</span></div>
+                </div>
+                <div class="col-md-4 mb-2">
+                  <div><strong>Email:</strong> <span id="profEmail">—</span></div>
+                  
+                  <div><strong>Phone:</strong> <span id="profPhone">—</span></div>
+                  <div><strong>Manager Email:</strong> <span id="profManagerEmail">—</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Requester Actions Section -->
+          <section id="requesterDash" class="dashboard-section card mb-4 d-none" aria-labelledby="requester-title">
+            <div class="card-body">
+              <div class="section-header">
+                <h2 id="requester-title" class="section-title">
+                  <i data-feather="plus-circle" class="title-icon"></i>
+                  Create New Request
+                </h2>
+                <p class="section-subtitle">Start a new Claim request or continue your draft</p>
+              </div>
+              <div class="action-buttons">
+                <a href="index.html" class="btn btn-primary btn-lg">
+                  <i data-feather="plus" class="me-2"></i>
+                  Create New Claim
+                </a>
+                <button id="continueDraftBtn" class="btn btn-secondary btn-lg d-none">
+                  <i data-feather="edit-3" class="me-2"></i>
+                  Continue Draft
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- My Requests Section -->
+          <section id="userRequests" class="dashboard-section card mb-4 d-none" aria-labelledby="requests-title">
+            <div class="card-body">
+              <div class="section-header">
+                <h2 id="requests-title" class="section-title">
+                  <i data-feather="file-text" class="title-icon"></i>
+                  My Claim Requests
+                </h2>
+                <div class="section-actions">
+                  <button class="btn btn-sm btn-outline-primary" onclick="refreshUserRequests()">
+                    <i data-feather="refresh-cw" class="me-1"></i>
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <!-- Filters / Export -->
+              <div class="table-tools d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                <div class="d-flex gap-2 flex-wrap">
+                  <input id="tblSearch" class="form-control form-control-sm" placeholder="Search…" style="max-width:180px;">
+                  <select id="statusFilter" class="form-select form-select-sm">
+                    <option value="">All status</option>
+                    <option>Pending</option><option>Approved</option>
+                    <option>Rejected</option><option>Draft</option>
+                  </select>
+                  <select id="deptFilter" class="form-select form-select-sm">
+                    <option value="">All dept.</option>
+                    <option>Finance</option><option>Sales</option><option>IT</option>
+                    <option>HR</option><option>Operations</option>
+                  </select>
+                </div>
+                <button id="exportBtn" class="btn btn-outline-secondary btn-sm">
+                  <i data-feather="download"></i>&nbsp;Export
+                </button>
+              </div>
+              
+              <div class="table-container">
+                <div class="table-responsive">
+                  <table id="userReqTbl" class="table-modern" cellspacing="0" cellpadding="0" role="table" aria-labelledby="requests-title">
+                    <thead>
+                      <tr>
+                        <th scope="col"><span>Unique #</span></th>
+                        <th scope="col"><span>Budget</span></th>
+                        <th scope="col"><span>Purpose</span></th>
+                        <th scope="col"><span>Approvers</span></th>
+                        <th scope="col"><span>Dept</span></th>
+                        <th scope="col"><span>Created</span></th>
+                        <th scope="col"><span>Status</span></th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+                <div id="noUserReqMsg" class="empty-state d-none">
+                  <i data-feather="check-circle" class="empty-icon"></i>
+                  <h3>No requests found</h3>
+                  <p>You haven't created any Claim requests yet.</p>
+                  <a href="index.html" class="btn btn-primary">Create Your First Request</a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Approver Dashboard Section -->
+          <section id="approverDash" class="dashboard-section card mb-4 d-none" aria-labelledby="approver-title">
+            <div class="card-body">
+              <div class="section-header">
+                <h2 id="approver-title" class="section-title">
+                  <i data-feather="check-square" class="title-icon"></i>
+                  Approver Dashboard
+                </h2>
+                <div class="section-actions">
+                  <button class="btn btn-sm btn-outline-primary" onclick="refreshApproverData()">
+                    <i data-feather="refresh-cw" class="me-1"></i>
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <!-- Pending Approvals -->
+              <div class="approval-section">
+                <div class="section-subheader">
+                  <h3 class="subsection-title">
+                    <i data-feather="clock" class="subsection-icon pending"></i>
+                    Pending Approvals
+                  </h3>
+                  <span class="count-badge pending" id="pendingCount">0</span>
+                </div>
+
+                <div class="table-tools d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                  <div class="d-flex gap-2 flex-wrap">
+                    <input id="pendSearch" class="form-control form-control-sm" placeholder="Search…" style="max-width:180px;">
+                    <select id="pendStatus" class="form-select form-select-sm">
+                      <option value="">All status</option><option>Pending</option>
+                    </select>
+                    <select id="pendDept" class="form-select form-select-sm">
+                      <option value="">All dept.</option>
+                      <option>Finance</option><option>Sales</option><option>IT</option>
+                      <option>HR</option><option>Operations</option>
+                    </select>
+                  </div>
+                  <button id="pendExport" class="btn btn-outline-secondary btn-sm">
+                    <i data-feather="download"></i>&nbsp;Export
+                  </button>
+                </div>
+
+                <div class="table-responsive mb-4">
+                  <table class="table-modern" id="approverPendingTbl" role="table" aria-labelledby="pending-approvals">
+                    <thead>
+                      <tr>
+                        <th scope="col">Unique #</th>
+                        <th scope="col">Claim Amount</th>
+                        <th scope="col">Comments</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Originator</th>
+                        <th scope="col">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Approved Approvals -->
+              <div class="approval-section">
+                <div class="section-subheader">
+                  <button id="showApprovedBtn" class="btn btn-outline-success btn-sm toggle-btn">
+                    <i data-feather="eye" class="me-1"></i>
+                    Show Approved
+                  </button>
+                  <span class="count-badge approved" id="approvedCount">0</span>
+                </div>
+                <div id="approvedSection" class="d-none">
+                  <div class="table-tools d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                    <input id="appSearch" class="form-control form-control-sm" placeholder="Search…" style="max-width:180px;">
+                    <button id="appExport" class="btn btn-outline-secondary btn-sm">
+                      <i data-feather="download"></i>&nbsp;Export
+                    </button>
+                  </div>
+
+                  <div class="table-responsive mb-4">
+                    <table class="table-modern" id="approverApprovedTbl" role="table" aria-labelledby="approved-approvals">
+                      <thead>
+                        <tr>
+                          <th scope="col">Unique #</th>
+                          <th scope="col">Budget</th>
+                          <th scope="col">Purpose</th>
+                          <th scope="col">Department</th>
+                          <th scope="col">Originator</th>
+                          <th scope="col">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Rejected Approvals -->
+              <div class="approval-section">
+                <div class="section-subheader">
+                  <button id="showRejectedBtn" class="btn btn-outline-danger btn-sm toggle-btn">
+                    <i data-feather="eye" class="me-1"></i>
+                    Show Rejected
+                  </button>
+                  <span class="count-badge rejected" id="rejectedCount">0</span>
+                </div>
+                <div id="rejectedSection" class="d-none">
+                  <div class="table-tools d-flex justify-content-between align-items-center mb-2 flex-wrap">
+                    <input id="rejSearch" class="form-control form-control-sm" placeholder="Search…" style="max-width:180px;">
+                    <button id="rejExport" class="btn btn-outline-secondary btn-sm">
+                      <i data-feather="download"></i>&nbsp;Export
+                    </button>
+                  </div>
+
+                  <div class="table-responsive mb-4">
+                    <table class="table-modern" id="approverRejectedTbl" role="table" aria-labelledby="rejected-approvals">
+                      <thead>
+                        <tr>
+                          <th scope="col">Unique #</th>
+                          <th scope="col">Budget</th>
+                          <th scope="col">Purpose</th>
+                          <th scope="col">Department</th>
+                          <th scope="col">Originator</th>
+                          <th scope="col">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Expert Opinion Section -->
+          <section id="expertDash" class="dashboard-section card mb-4 d-none" aria-labelledby="expert-title">
+            <div class="card-body">
+              <div class="section-header">
+                <h2 id="expert-title" class="section-title">
+                  <i data-feather="award" class="title-icon"></i>
+                  Expert Opinion
+                </h2>
+                <p class="section-subtitle">Expert advice and recommendations</p>
+              </div>
+              <div id="expertList" class="expert-list"></div>
+            </div>
+          </section>
+
+          <!-- Master Controls Section -->
+          <section id="masterDash" class="dashboard-section card mb-4 d-none" aria-labelledby="master-title">
+            <div class="card-body">
+              <div class="section-header">
+                <h2 id="master-title" class="section-title">
+                  <i data-feather="settings" class="title-icon"></i>
+                  Master Controls
+                </h2>
+                <p class="section-subtitle">Advanced system administration and controls</p>
+              </div>
+              <div class="action-buttons">
+                <a href="masterDashboard.html" class="btn btn-primary btn-lg">
+                  <i data-feather="external-link" class="me-2"></i>
+                  Open Master Dashboard
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.28.14/js/jquery.tablesorter.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Your dashboard logic -->
+  <script src="dash.js"></script>
+
+  <!-- Minimal init: icons + tablesorter + refresh helpers -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      if (typeof feather !== 'undefined') feather.replace();
+      $('#userReqTbl').tablesorter();
+      $('#approverPendingTbl').tablesorter();
+      $('#approverApprovedTbl').tablesorter();
+      $('#approverRejectedTbl').tablesorter();
+      window.refreshUserRequests = function() { location.reload(); };
+      window.refreshApproverData = function() { location.reload(); };
+    });
+  </script>
+</body>
+</html>
