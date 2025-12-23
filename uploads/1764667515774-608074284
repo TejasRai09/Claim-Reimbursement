@@ -1,5 +1,0 @@
-MONGO_URI = mongodb://localhost:27017/approvaldb
-OUTLOOK_USER = tejas.rai@adventz.com
-OUTLOOK_PASS = Tejasrai@
-NOTIFY_OVERRIDE_EMAIL=tejas.rai@adventz.com
-BASE_URL=http://localhost:3000
